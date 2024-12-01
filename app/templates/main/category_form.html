@@ -1,0 +1,51 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">{{ title }}</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form
+        method="POST"
+        onsubmit="sessionStorage.setItem('formSubmitted', 'true');"
+      >
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.name.label(class="form-label") }} {{
+          form.name(class="form-control") }} {% if form.name.errors %} {% for
+          error in form.name.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+          {% endfor %} {% endif %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.icon.label(class="form-label") }} {{
+          form.icon(class="form-control") }} {% if form.icon.errors %} {% for
+          error in form.icon.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+          {% endfor %} {% endif %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.sort_order.label(class="form-label") }} {{
+          form.sort_order(class="form-control") }} {% if form.sort_order.errors
+          %} {% for error in form.sort_order.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+          {% endfor %} {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a
+            href="{{ url_for('main.category_list') }}"
+            class="btn btn-secondary"
+            >Abbrechen</a
+          >
+          <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

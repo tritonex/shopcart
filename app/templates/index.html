@@ -1,0 +1,99 @@
+{% extends "base.html" %} {% block content %} {% if
+current_user.is_authenticated %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Meine Einkaufslisten</h1>
+    <a href="{{ url_for('main.shopping_list_new') }}" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i> Neue Liste
+    </a>
+  </div>
+
+  {% if shopping_lists %}
+  <div class="row">
+    {% for list in shopping_lists %}
+    <div class="col-12 col-md-6 col-lg-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5
+            class="card-title d-flex justify-content-between align-items-center"
+          >
+            {{ list.name }}
+            <small class="text-muted">
+              {% set checked_items = list.list_items | selectattr('checked',
+              'true') | list %} {% set total_items = list.list_items | list %}
+              {{ checked_items|length }}/{{ total_items|length }}
+            </small>
+          </h5>
+
+          <p class="card-text">
+            <small class="text-muted">
+              Erstellt: {{ list.created_at.strftime('%d.%m.%Y %H:%M') }}
+            </small>
+          </p>
+
+          {% if list.list_items %}
+          <ul class="list-unstyled mb-0">
+            {% for item in list.list_items[:3] %}
+            <li
+              class="{% if item.checked %}text-decoration-line-through text-muted{% endif %}"
+            >
+              • {{ item.article.artName }} {% if item.quantity %} ({{
+              item.quantity }} {{ item.unit }}) {% endif %}
+            </li>
+            {% endfor %} {% if list.list_items|length > 3 %}
+            <li class="text-muted">
+              • ... und {{ list.list_items|length - 3 }} weitere
+            </li>
+            {% endif %}
+          </ul>
+          {% else %}
+          <p class="text-muted mb-0">Keine Artikel in dieser Liste</p>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="btn-group w-100">
+            <a
+              href="{{ url_for('main.shopping_list_edit', id=list.id) }}"
+              class="btn btn-outline-primary"
+            >
+              <i class="bi bi-pencil"></i> Bearbeiten
+            </a>
+            <a
+              href="{{ url_for('main.shopping_list_shop', id=list.id) }}"
+              class="btn btn-outline-success"
+            >
+              <i class="bi bi-cart"></i> Einkaufen
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card">
+    <div class="card-body text-center">
+      <p class="mb-3"><i class="bi bi-cart-x fs-1"></i></p>
+      <h3>Keine Einkaufslisten</h3>
+      <p class="text-muted">Sie haben noch keine Einkaufslisten erstellt.</p>
+      <a href="{{ url_for('main.shopping_list_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Erste Liste erstellen
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="text-center">
+  <h1 class="display-4 mb-4">Willkommen bei ShopCart</h1>
+  <p class="lead">
+    Organisieren Sie Ihre Einkaufslisten einfach und effizient.
+  </p>
+  <div class="mt-4">
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary me-2">Login</a>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary"
+      >Registrieren</a
+    >
+  </div>
+</div>
+{% endif %} {% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Artikel</h1>
+    <a href="{{ url_for('main.article_add') }}" class="btn btn-primary">
+      <span class="d-none d-sm-inline">Neuer Artikel</span>
+      <i class="bi bi-plus-lg d-sm-none"></i>
+    </a>
+  </div>
+
+  {% for category in categories %}
+  <div class="card mb-4">
+    <div
+      class="card-header bg-light d-flex justify-content-between align-items-center"
+    >
+      <h5 class="mb-0">{{ category.icon }} {{ category.name }}</h5>
+      <a
+        href="{{ url_for('main.article_add', category_id=category.id) }}"
+        class="btn btn-sm btn-outline-success"
+      >
+        <i class="bi bi-plus-lg"></i>
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <tbody>
+          {% for article in category.articles|sort(attribute='artName') %}
+          <tr>
+            <td>{{ article.artName }}</td>
+            <td class="text-end" style="width: 100px">
+              <div class="btn-group">
+                <a
+                  href="{{ url_for('main.article_edit', id=article.id) }}"
+                  class="btn btn-sm btn-outline-primary"
+                >
+                  <i class="bi bi-pencil"></i>
+                </a>
+                {% if not article.list_items %}
+                <form
+                  action="{{ url_for('main.article_delete', id=article.id) }}"
+                  method="post"
+                  class="d-inline"
+                  onsubmit="return confirm('Artikel wirklich löschen?');"
+                >
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="2" class="text-center text-muted">
+              Keine Artikel in dieser Kategorie
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="container">
+  <div class="card">
+    <div
+      class="card-header bg-light d-flex justify-content-between align-items-center"
+    >
+      <h5 class="card-title mb-0">{{ shopping_list.name }}</h5>
+      <div>
+        <a
+          href="{{ url_for('main.shopping_list_edit', id=shopping_list.id) }}"
+          class="btn btn-sm btn-outline-primary me-2"
+          >Bearbeiten</a
+        >
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+      {% if shopping_list.list_items %} {% set unchecked_items =
+      shopping_list.list_items|rejectattr('checked')|list %} {% if
+      unchecked_items|length == 0 %}
+      <!-- Alle Artikel sind abgehakt -->
+      <div class="card-body text-center">
+        <p class="mb-4">🎉 Alle Artikel sind im Einkaufskorb!</p>
+        <p>Möchten Sie die Einkaufsliste löschen?</p>
+        <div class="d-flex justify-content-center gap-2">
+          <form
+            method="POST"
+            action="{{ url_for('main.shopping_list_delete', id=shopping_list.id) }}"
+            style="display: inline"
+          >
+            <button type="submit" class="btn btn-success">
+              Ja, Liste löschen
+            </button>
+          </form>
+          <a
+            href="{{ url_for('main.shopping_list_edit', id=shopping_list.id) }}"
+            class="btn btn-outline-secondary"
+            >Nein, Liste behalten</a
+          >
+        </div>
+      </div>
+      {% else %}
+      <!-- Normale Artikel-Liste -->
+      <div class="list-group list-group-flush">
+        {# Nicht erledigte Items #} {% for item in
+        shopping_list.list_items|sort(attribute='article.category.sort_order')|rejectattr('checked')
+        %}
+        <div class="list-group-item py-2">
+          <div class="d-flex align-items-center">
+            <div class="form-check">
+              <form
+                method="POST"
+                action="{{ url_for('main.shopping_list_item_toggle', list_id=shopping_list.id, article_id=item.article_id, source='shop') }}"
+              >
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  style="
+                    cursor: pointer;
+                    width: 1.8em;
+                    height: 1.8em;
+                    margin-top: 0.1em;
+                  "
+                  onclick="this.form.submit()"
+                />
+              </form>
+            </div>
+            <span class="ms-2 me-2 fs-4">{{ item.article.category.icon }}</span>
+            <span class="fs-5">
+              {{ item.article.artName }} {% if item.quantity %} ({{
+              item.quantity }}{% if item.unit %} {{ item.unit }}{% endif %}) {%
+              endif %} {% if item.notes %}
+              <div class="text-muted small">{{ item.notes }}</div>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %} {# Erledigte Items #} {% for item in
+        shopping_list.list_items|sort(attribute='article.category.sort_order')|selectattr('checked')
+        %}
+        <div class="list-group-item py-2 bg-light">
+          <div class="d-flex align-items-center">
+            <div class="form-check">
+              <form
+                method="POST"
+                action="{{ url_for('main.shopping_list_item_toggle', list_id=shopping_list.id, article_id=item.article_id, source='shop') }}"
+              >
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  style="
+                    cursor: pointer;
+                    width: 1.8em;
+                    height: 1.8em;
+                    margin-top: 0.1em;
+                  "
+                  onclick="this.form.submit()"
+                  checked
+                />
+              </form>
+            </div>
+            <span class="ms-2 me-2 fs-4">{{ item.article.category.icon }}</span>
+            <span class="text-decoration-line-through text-muted fs-5">
+              {{ item.article.artName }} {% if item.quantity %}
+              <span class="fs-5"
+                >({{ item.quantity }}{% if item.unit %} {{ item.unit }}{% endif
+                %})</span
+              >
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %} {% else %}
+      <div class="card-body text-center">Noch keine Artikel in der Liste.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% block script %}
+<style>
+  .form-check-input:checked {
+    background-color: #77c1b7;
+    border-color: #77c1b7;
+  }
+</style>
+
+{% endblock %} {% endblock %}

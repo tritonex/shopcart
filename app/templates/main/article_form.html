@@ -1,0 +1,41 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">{{ title }}</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form
+        method="POST"
+        onsubmit="sessionStorage.setItem('formSubmitted', 'true');"
+      >
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.artName.label(class="form-label") }} {{
+          form.artName(class="form-control") }} {% if form.artName.errors %} {%
+          for error in form.artName.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+          {% endfor %} {% endif %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.category_id.label(class="form-label") }} {{
+          form.category_id(class="form-control") }} {% if
+          form.category_id.errors %} {% for error in form.category_id.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+          {% endfor %} {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a href="{{ url_for('main.article_list') }}" class="btn btn-secondary"
+            >Abbrechen</a
+          >
+          <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="card">
+    <div class="card-header bg-light">
+      <h5 class="card-title mb-0">Benutzerverwaltung</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Status</th>
+            <th>Registriert</th>
+            <th>Letzter Login</th>
+            <th>Listen</th>
+            <th>Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>
+              {{ user.username }} {% if user == current_user %}
+              <span class="badge bg-info">Sie</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if user.is_admin %}
+              <span class="badge bg-primary">Admin</span>
+              {% else %}
+              <span class="badge bg-secondary">User</span>
+              {% endif %}
+            </td>
+            <td>
+              {{ user.registered_at.strftime('%d.%m.%Y %H:%M') if
+              user.registered_at else 'N/A' }}
+            </td>
+            <td>
+              {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login
+              else 'Nie' }}
+            </td>
+            <td>{{ user.shopping_lists|length }}</td>
+            <td>
+              {% if user != current_user and not user.is_admin %}
+              <form
+                action="{{ url_for('auth.user_delete', id=user.id) }}"
+                method="POST"
+                onsubmit="return confirm('Benutzer {{ user.username }} wirklich löschen?');"
+                style="display: inline"
+              >
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

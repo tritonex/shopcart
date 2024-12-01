@@ -1,0 +1,35 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h1 class="card-title h4 mb-4">{{ title }}</h1>
+
+          <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+              {{ form.name.label(class="form-label") }} {{
+              form.name(class="form-control", placeholder="z.B. Wocheneinkauf")
+              }} {% for error in form.name.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="d-grid gap-2">
+              {{ form.submit(class="btn btn-primary") }}
+              <a
+                href="{{ url_for('main.index') }}"
+                class="btn btn-outline-secondary"
+              >
+                Abbrechen
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

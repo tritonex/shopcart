@@ -1,0 +1,493 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="container" data-shopping-list-id="{{ shopping_list.id }}">
+  <div class="row">
+    <!-- Linke Spalte: Artikel hinzufügen -->
+    <div class="col-12 col-lg-4 order-1 order-lg-2 mb-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Artikel hinzufügen</h5>
+        </div>
+
+        <div class="card-body p-0">
+          <!-- Kategorie-Auswahl -->
+          <div
+            class="list-group list-group-horizontal border-bottom overflow-auto"
+          >
+            {% for category in categories %}
+            <div
+              class="list-group-item"
+              role="button"
+              data-category-id="{{ category.id }}"
+            >
+              <div>{{ category.icon }}</div>
+              <small>{{ category.name }}</small>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Artikel-Listen pro Kategorie -->
+          {% for category in categories %}
+          <div
+            id="category-{{ category.id }}"
+            class="article-list"
+            style="display: none"
+          >
+            <div class="list-group list-group-flush">
+              {% for article in category.articles|sort(attribute='artName') %}
+              <div
+                class="list-group-item article-item {% if article.id in added_article_ids %}already-added{% endif %}"
+                role="button"
+                data-article-id="{{ article.id }}"
+                onclick="addArticle('{{ shopping_list.id }}', '{{ article.id }}')"
+              >
+                {{ article.artName }}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Rechte Spalte: Artikel-Liste -->
+    <div class="col-12 col-lg-8 order-2 order-lg-1">
+      <div class="card">
+        <div
+          class="card-header bg-light d-flex justify-content-between align-items-center"
+        >
+          <h5 class="card-title mb-0">{{ shopping_list.name }}</h5>
+          <div>
+            <a
+              href="{{ url_for('main.shopping_list_shop', id=shopping_list.id) }}"
+              class="btn btn-sm btn-outline-success me-2"
+              >Einkaufen</a
+            >
+            <!-- Lösch-Button für die ganze Liste -->
+            <form
+              method="POST"
+              action="{{ url_for('main.shopping_list_delete', id=shopping_list.id) }}"
+              style="display: inline"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                Löschen
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card-body">
+          {% if shopping_list.list_items %}
+          <div class="list-group">
+            {% for item in
+            shopping_list.list_items|sort(attribute='article.category.sort_order')
+            %}
+            <div
+              class="list-group-item d-flex justify-content-between align-items-center py-2"
+            >
+              <div class="d-flex align-items-center flex-grow-1">
+                <span class="ms-2 me-2">{{ item.article.category.icon }}</span>
+                <div>
+                  <span
+                    class="item-details"
+                    role="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#quantityModal"
+                    data-item-id="{{ item.article_id }}"
+                    data-list-id="{{ shopping_list.id }}"
+                    data-name="{{ item.article.artName }}"
+                    data-quantity="{{ item.quantity or '' }}"
+                    data-unit="{{ item.unit or '' }}"
+                    data-notes="{{ item.notes or '' }}"
+                  >
+                    {{ item.article.artName }} {% if item.quantity %}
+                    <small
+                      >({{ item.quantity }}{% if item.unit %} {{ item.unit }}{%
+                      endif %})</small
+                    >
+                    {% endif %}
+                  </span>
+                  {% if item.notes %}
+                  <div class="text-muted small">{{ item.notes }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="ms-2">
+                <form
+                  method="POST"
+                  action="{{ url_for('main.shopping_list_item_remove', list_id=shopping_list.id, article_id=item.article_id) }}"
+                  style="display: inline"
+                >
+                  <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                  />
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    🗑️
+                  </button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div>Noch keine Artikel in der Liste.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quantity Modal -->
+<div id="quantityModal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title"></h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="modal-body py-2">
+          <div class="mb-3">
+            <label class="form-label">Menge:</label>
+            <input type="text" name="quantity" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Einheit:</label>
+            <select name="unit" class="form-select">
+              <option value="">Einheit wählen</option>
+              <option value="Stk">Stück</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="L">Liter</option>
+              <option value="ml">ml</option>
+              <option value="Pkg">Packung</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Notiz:</label>
+            <input type="text" name="notes" class="form-control" />
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            onclick="deleteQuantity()"
+          >
+            Menge löschen
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Abbrechen
+          </button>
+          <button type="submit" class="btn btn-sm btn-primary">
+            Aktualisieren
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% block scripts %}
+<script>
+  // Kategorie-Handling
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM loaded");
+
+    // HTML-Debug-Ausgabe
+    const categories = document.querySelector(
+      ".list-group.list-group-horizontal"
+    );
+    console.log("Categories HTML:", categories?.innerHTML);
+
+    const categoryButtons = document.querySelectorAll("[data-category-id]");
+    console.log("Found category buttons:", categoryButtons.length);
+
+    function activateCategory(categoryId) {
+      console.log("Activating category:", categoryId);
+
+      // Alle Listen ausblenden
+      document.querySelectorAll(".article-list").forEach((list) => {
+        list.style.display = "none";
+      });
+
+      // Aktive Klassen entfernen
+      categoryButtons.forEach((btn) => btn.classList.remove("active"));
+
+      // Gewählte Kategorie aktivieren
+      const selectedButton = document.querySelector(
+        `[data-category-id="${categoryId}"]`
+      );
+      const selectedList = document.querySelector(`#category-${categoryId}`);
+
+      if (selectedButton && selectedList) {
+        selectedButton.classList.add("active");
+        selectedList.style.display = "block";
+        console.log("Category activated successfully");
+      } else {
+        console.log("Could not find button or list:", {
+          button: selectedButton,
+          list: selectedList,
+          categoryId: categoryId,
+        });
+      }
+    }
+
+    categoryButtons.forEach((button) => {
+      console.log(
+        "Adding click handler to button:",
+        button.getAttribute("data-category-id")
+      );
+      button.addEventListener("click", function (e) {
+        console.log("Category button clicked");
+        const categoryId = this.getAttribute("data-category-id");
+        localStorage.setItem("activeCategory", categoryId);
+        activateCategory(categoryId);
+      });
+    });
+
+    // Erste Kategorie standardmäßig aktivieren
+    if (categoryButtons.length > 0) {
+      console.log("Activating first category");
+      const firstCategoryId =
+        categoryButtons[0].getAttribute("data-category-id");
+      activateCategory(firstCategoryId);
+    }
+  });
+
+  // Artikel hinzufügen mit Kategorie- und Scroll-Erhaltung
+  async function addArticle(listId, articleId) {
+    try {
+      // Kategorie und Scroll-Position speichern
+      const currentCategory = document
+        .querySelector("[data-category-id].active")
+        ?.getAttribute("data-category-id");
+      const container = document.querySelector(
+        ".list-group.list-group-horizontal"
+      );
+      const scrollPosition = container ? container.scrollLeft : 0;
+
+      if (currentCategory) {
+        localStorage.setItem("activeCategory", currentCategory);
+        localStorage.setItem("categoryScrollPosition", scrollPosition);
+      }
+
+      const response = await fetch(
+        `/shopping_list/${listId}/add/${articleId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
+            value,
+          },
+          credentials: "same-origin",
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Flash Container finden oder erstellen
+        let flashMessagesContainer = document.querySelector(".flash-messages");
+        if (!flashMessagesContainer) {
+          flashMessagesContainer = document.createElement("div");
+          flashMessagesContainer.className = "flash-messages";
+          document.querySelector("main")?.prepend(flashMessagesContainer);
+        }
+
+        // Flash Message erstellen
+        const flashContainer = document.createElement("div");
+        flashContainer.className = `alert alert-${data.category} alert-dismissible fade show`;
+        flashContainer.setAttribute("role", "alert");
+        flashContainer.innerHTML = `
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+        // Flash Message einfügen
+        flashMessagesContainer.appendChild(flashContainer);
+
+        // Verzögerter Reload nach 1 Sekunde
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      } else {
+        console.error("Fehler:", data.message);
+      }
+    } catch (error) {
+      console.error("Fehler beim Hinzufügen:", error);
+    }
+  }
+
+  // Modal Handling
+  document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("quantityModal");
+    if (!modal) return;
+
+    modal.addEventListener("show.bs.modal", function (event) {
+      const button = event.relatedTarget;
+      // Korrekte Attribute-Namen verwenden
+      const listId = button.getAttribute("data-list-id");
+      const itemId = button.getAttribute("data-item-id");
+      const itemName = button.getAttribute("data-name");
+
+      console.log("List ID:", listId);
+      console.log("Item ID:", itemId);
+
+      // Form und Action setzen
+      const form = modal.querySelector("form");
+      if (form) {
+        // URL korrekt zusammenbauen
+        form.action = `/shopping_list/item/${listId}/${itemId}/update`;
+        console.log("Form action:", form.action);
+
+        // Werte in die Felder setzen
+        form.querySelector('input[name="quantity"]').value =
+          button.getAttribute("data-quantity") || "";
+        form.querySelector('select[name="unit"]').value =
+          button.getAttribute("data-unit") || "";
+        form.querySelector('input[name="notes"]').value =
+          button.getAttribute("data-notes") || "";
+      }
+
+      // Titel setzen
+      modal.querySelector(".modal-title").textContent = itemName;
+    });
+  });
+
+  // Funktion zum Löschen der Menge
+  function deleteQuantity() {
+    const form = document.getElementById("quantityModal").querySelector("form");
+    if (form) {
+      form.querySelector('input[name="quantity"]').value = "";
+      form.querySelector('select[name="unit"]').value = "";
+      form.querySelector('input[name="notes"]').value = "";
+      form.submit();
+    }
+  }
+
+  // Initialisierung beim Laden
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("Initializing category handling");
+
+    // Event-Listener für Kategorie-Buttons
+    document.querySelectorAll("[data-category-id]").forEach((button) => {
+      button.addEventListener("click", function () {
+        const categoryId = this.getAttribute("data-category-id");
+        activateCategory(categoryId);
+      });
+    });
+
+    // Gespeicherte Kategorie und Scroll-Position wiederherstellen
+    const savedCategory = localStorage.getItem("activeCategory");
+    const savedScrollPosition =
+      parseInt(localStorage.getItem("categoryScrollPosition")) || 0;
+
+    if (savedCategory) {
+      // Kurze Verzögerung für sicheres DOM-Rendering
+      setTimeout(() => {
+        activateCategory(savedCategory, savedScrollPosition);
+      }, 100);
+    } else {
+      const firstButton = document.querySelector("[data-category-id]");
+      if (firstButton) {
+        activateCategory(firstButton.getAttribute("data-category-id"));
+      }
+    }
+  });
+
+  // Globale Variablen für die Kategorieverwaltung
+  let activeCategory = null;
+  let categoryContainer = null;
+
+  // Kategorie aktivieren
+  function activateCategory(categoryId, scrollPosition = null) {
+    console.log("Activating category:", categoryId);
+
+    // Alle Listen ausblenden
+    document.querySelectorAll(".article-list").forEach((list) => {
+      list.style.display = "none";
+    });
+
+    // Aktive Klassen entfernen
+    document.querySelectorAll("[data-category-id]").forEach((btn) => {
+      btn.classList.remove("active");
+    });
+
+    // Gewählte Kategorie aktivieren
+    const selectedButton = document.querySelector(
+      `[data-category-id="${categoryId}"]`
+    );
+    const selectedList = document.querySelector(`#category-${categoryId}`);
+
+    if (selectedButton && selectedList) {
+      selectedButton.classList.add("active");
+      selectedList.style.display = "block";
+
+      // Kategorie speichern
+      localStorage.setItem("activeCategory", categoryId);
+
+      // Scroll-Position wiederherstellen oder Button in Sicht scrollen
+      const container = document.querySelector(
+        ".list-group.list-group-horizontal"
+      );
+      if (container) {
+        if (scrollPosition !== null) {
+          container.scrollLeft = scrollPosition;
+        } else {
+          // Button in Sicht scrollen
+          const buttonLeft = selectedButton.offsetLeft;
+          const containerWidth = container.clientWidth;
+          const scrollLeft =
+            buttonLeft - containerWidth / 2 + selectedButton.offsetWidth / 2;
+          container.scrollLeft = scrollLeft;
+        }
+        // Aktuelle Scroll-Position speichern
+        localStorage.setItem("categoryScrollPosition", container.scrollLeft);
+      }
+    }
+  }
+</script>
+
+<style>
+  .list-group-horizontal {
+    -webkit-overflow-scrolling: touch; /* Für besseres Scrolling auf iOS */
+  }
+
+  .list-group-item[data-category-id] {
+    cursor: pointer;
+  }
+
+  .list-group-item[data-category-id].active {
+    background-color: #018170 !important;
+    color: white !important;
+    border-color: #018170 !important;
+  }
+
+  .article-item.already-added {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+</style>
+
+{% endblock %} {% endblock %}

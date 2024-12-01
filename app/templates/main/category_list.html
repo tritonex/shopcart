@@ -1,0 +1,71 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Kategorien</h1>
+    <a href="{{ url_for('main.category_add') }}" class="btn btn-primary">
+      <span class="d-none d-sm-inline">Neue Kategorie</span>
+      <i class="bi bi-plus-lg d-sm-none"></i>
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-center">Icon</th>
+            <th>Name</th>
+            <th class="text-center d-none d-sm-table-cell">Sort.</th>
+            <th class="text-center d-none d-sm-table-cell">#</th>
+            <th class="text-center" style="min-width: 80px">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for category in categories %}
+          <tr>
+            <td class="text-center">{{ category.icon }}</td>
+            <td>
+              {{ category.name }}
+              <div class="d-sm-none text-muted small">
+                Sort: {{ category.sort_order }} | Artikel: {{
+                category.articles|length }}
+              </div>
+            </td>
+            <td class="text-center d-none d-sm-table-cell">
+              {{ category.sort_order }}
+            </td>
+            <td class="text-center d-none d-sm-table-cell">
+              {{ category.articles|length }}
+            </td>
+            <td class="text-center">
+              <div class="btn-group">
+                <a
+                  href="{{ url_for('main.category_edit', id=category.id) }}"
+                  class="btn btn-sm btn-outline-primary"
+                >
+                  <i class="bi bi-pencil"></i>
+                </a>
+                {% if category.articles|length == 0 %}
+                <form
+                  action="{{ url_for('main.category_delete', id=category.id) }}"
+                  method="post"
+                  class="d-inline"
+                  onsubmit="return confirm('Kategorie wirklich löschen?');"
+                >
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

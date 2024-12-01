@@ -1,0 +1,88 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Kategorien</h1>
+    <a href="{{ url_for('main.category_add') }}" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i>
+      <span class="d-none d-sm-inline">Neue Kategorie</span>
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0">
+        <thead>
+          <tr>
+            <th style="width: 60px" class="text-center px-2">Icon</th>
+            <th>Name</th>
+            <th style="width: 50px" class="text-center px-1">#</th>
+            <th style="width: 50px" class="text-center px-1">
+              <i class="bi bi-box"></i>
+            </th>
+            <th style="width: 90px" class="text-end">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for category in categories %}
+          <tr>
+            <td class="text-center align-middle px-2">{{ category.icon }}</td>
+            <td class="align-middle">{{ category.name }}</td>
+            <td class="text-center align-middle px-1">
+              {{ category.sort_order }}
+            </td>
+            <td class="text-center align-middle px-1">
+              {{ category.articles|length }}
+            </td>
+            <td class="align-middle text-end">
+              <div class="btn-group btn-group-sm">
+                <a
+                  href="{{ url_for('main.category_edit', id=category.id) }}"
+                  class="btn btn-outline-primary btn-sm"
+                >
+                  <i class="bi bi-pencil"></i>
+                </a>
+                {% if not category.articles %}
+                <form
+                  action="{{ url_for('main.category_delete', id=category.id) }}"
+                  method="POST"
+                  onsubmit="return confirm('Kategorie wirklich löschen?');"
+                  style="display: inline"
+                >
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% block styles %}
+<style>
+  /* Kompaktere Tabelle */
+  .table th,
+  .table td {
+    vertical-align: middle;
+  }
+
+  /* Kleinere Buttons auf mobilen Geräten */
+  @media (max-width: 576px) {
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .table td,
+    .table th {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+  }
+</style>
+{% endblock %} {% endblock %}
