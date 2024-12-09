@@ -1,13 +1,20 @@
 {% extends "base.html" %} {% block content %}
 
-<div class="container" data-shopping-list-id="{{ shopping_list.id }}">
+<div class="container shopping-list-id="{{ shopping_list.id }}">
   <div class="row">
-    <!-- Linke Spalte: Artikel hinzufügen -->
-    <div class="col-12 col-lg-4 order-1 order-lg-2 mb-4">
-      <div class="card">
-        <div class="card-header bg-light">
-          <h5 class="card-title mb-0">Artikel hinzufügen</h5>
-        </div>
+      <div class="col-12 col-lg-6 order-1 order-lg-2 mb-4">
+          <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0" id="artikel">+ Artikel</h5>
+              <div class="flex-grow-2 mx-1 d-flex align-items-center">
+                <div class="position-relative flex-grow-1">
+                  <input type="text" id="articleSearch" class="form-control pe-4" placeholder="Artikel suchen...">
+                  <button id="voiceSearchBtn" class="btn btn-link position-absolute end-0 top-50 translate-middle-y p-1">
+                    <i class="bi bi-mic-fill"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
 
         <div class="card-body p-0">
           <!-- Kategorie-Auswahl -->
@@ -24,6 +31,12 @@
               <small>{{ category.name }}</small>
             </div>
             {% endfor %}
+          </div>
+
+          <!-- Suchergebnisse-Container -->
+          <div id="searchResults" class="article-list" style="display: none">
+            <div class="list-group list-group-flush">
+            </div>
           </div>
 
           <!-- Artikel-Listen pro Kategorie -->
@@ -52,7 +65,7 @@
     </div>
 
     <!-- Rechte Spalte: Artikel-Liste -->
-    <div class="col-12 col-lg-8 order-2 order-lg-1">
+    <div class="col-12 col-lg-6 order-2 order-lg-1">
       <div class="card">
         <div
           class="card-header bg-light d-flex justify-content-between align-items-center"
@@ -69,12 +82,8 @@
               method="POST"
               action="{{ url_for('main.shopping_list_delete', id=shopping_list.id) }}"
               style="display: inline"
+              onsubmit="return confirm('Möchten Sie die Einkaufsliste wirklich löschen?');"
             >
-              <input
-                type="hidden"
-                name="csrf_token"
-                value="{{ csrf_token() }}"
-              />
               <button type="submit" class="btn btn-sm btn-outline-danger">
                 Löschen
               </button>
@@ -124,11 +133,6 @@
                   action="{{ url_for('main.shopping_list_item_remove', list_id=shopping_list.id, article_id=item.article_id) }}"
                   style="display: inline"
                 >
-                  <input
-                    type="hidden"
-                    name="csrf_token"
-                    value="{{ csrf_token() }}"
-                  />
                   <button type="submit" class="btn btn-sm btn-outline-danger">
                     🗑️
                   </button>
@@ -160,7 +164,6 @@
         ></button>
       </div>
       <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body py-2">
           <div class="mb-3">
             <label class="form-label">Menge:</label>
@@ -276,7 +279,7 @@
   // Artikel hinzufügen mit Kategorie- und Scroll-Erhaltung
   async function addArticle(listId, articleId) {
     try {
-      // Kategorie und Scroll-Position speichern
+      // 1. Kategorie-Info speichern
       const currentCategory = document
         .querySelector("[data-category-id].active")
         ?.getAttribute("data-category-id");
@@ -290,23 +293,30 @@
         localStorage.setItem("categoryScrollPosition", scrollPosition);
       }
 
+      // 2. Artikel hinzufügen
       const response = await fetch(
         `/shopping_list/${listId}/add/${articleId}`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
             Accept: "application/json",
-            value,
           },
           credentials: "same-origin",
         }
       );
 
       const data = await response.json();
-
       if (data.success) {
-        // Flash Container finden oder erstellen
+        // 3. Artikel in Liste markieren
+        const articleItem = document.querySelector(
+          `[article-id="${articleId}"]`
+        );
+        if (articleItem) {
+          articleItem.classList.add("already-added");
+        }
+
+        // 4. Flash-Message anzeigen
         let flashMessagesContainer = document.querySelector(".flash-messages");
         if (!flashMessagesContainer) {
           flashMessagesContainer = document.createElement("div");
@@ -314,7 +324,6 @@
           document.querySelector("main")?.prepend(flashMessagesContainer);
         }
 
-        // Flash Message erstellen
         const flashContainer = document.createElement("div");
         flashContainer.className = `alert alert-${data.category} alert-dismissible fade show`;
         flashContainer.setAttribute("role", "alert");
@@ -322,14 +331,10 @@
                 ${data.message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
-
-        // Flash Message einfügen
         flashMessagesContainer.appendChild(flashContainer);
 
-        // Verzögerter Reload nach 1 Sekunde
-        setTimeout(() => {
-          location.reload();
-        }, 1000);
+        // 5. Optional: Verzögerter Reload entfernen oder Zeitspanne erhöhen
+        setTimeout(() => location.reload(), 500);
       } else {
         console.error("Fehler:", data.message);
       }
@@ -406,7 +411,7 @@
       // Kurze Verzögerung für sicheres DOM-Rendering
       setTimeout(() => {
         activateCategory(savedCategory, savedScrollPosition);
-      }, 100);
+      }, 10);
     } else {
       const firstButton = document.querySelector("[data-category-id]");
       if (firstButton) {
@@ -466,6 +471,75 @@
       }
     }
   }
+</script>
+
+{{ super() }}  <!-- Um sicherzustellen, dass existierende Scripts erhalten bleiben -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('articleSearch');
+    const searchResults = document.getElementById('searchResults');
+    const categoryLists = document.querySelectorAll('[id^="category-"]');
+    
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const searchTerm = this.value.trim();
+        
+        // Hide all category lists when searching
+        categoryLists.forEach(list => list.style.display = 'none');
+        
+        if (searchTerm.length >= 2) {
+            searchTimeout = setTimeout(() => {
+                fetch(`/search_articles/${searchTerm}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.style.display = 'block';
+                        const listGroup = searchResults.querySelector('.list-group');
+                        listGroup.innerHTML = '';
+                        
+                        data.articles.forEach(article => {
+                            const item = document.createElement('div');
+                            item.className = `list-group-item article-item${article.already_added ? ' already-added' : ''}`;
+                            item.setAttribute('role', 'button');
+                            item.setAttribute('article-id', article.id);
+                            item.onclick = () => addArticle('{{ shopping_list.id }}', article.id);
+                            item.innerHTML = `${article.artName} <small class="text-muted">(${article.category_name})</small>`;
+                            listGroup.appendChild(item);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            }, 300);
+        } else {
+            searchResults.style.display = 'none';
+        }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('articleSearch');
+    const voiceButton = document.getElementById('voiceSearchBtn');
+    
+    if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'de-DE';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        recognition.onresult = function(event) {
+            const result = event.results[0][0].transcript;
+            searchInput.value = result;
+            searchInput.dispatchEvent(new Event('input'));
+        };
+        
+        voiceButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            recognition.start();
+        });
+    } else {
+        voiceButton.style.display = 'none';
+    }
+});
 </script>
 
 <style>
